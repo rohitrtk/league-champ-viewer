@@ -1,20 +1,25 @@
-import { useRef, useEffect, useState } from "react";
-import { Input, Menu, List, ListItem } from "@material-tailwind/react";
+import { useRef, useEffect, useState, RefObject } from "react";
+import {
+  Input,
+  Menu,
+  List,
+  ListItem,
+  Avatar,
+  Typography
+} from "@material-tailwind/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faS, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { ChampionData, ChampionPreview } from "../../types";
+import { useDispatch } from "react-redux";
+import { setChampionData } from "../../state/championSlice";
 
-const Searchbar = () => {
-  const names = [
-    "Nidalee",
-    "Ahri",
-    "Darius",
-    "Evelynn",
-    "Veigar",
-    "Lee Sin"
-  ].sort();
+interface Props {
+  champions: ChampionPreview[];
+}
 
+const Searchbar = ({ champions }: Props) => {
   const [focus, setFocus] = useState(false);
-  const [matches, setMatches] = useState<string[]>([]);
+  const [matches, setMatches] = useState<typeof champions>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,19 +30,17 @@ const Searchbar = () => {
     }
 
     input.addEventListener("keyup", () => {
-      const _matches: string[] = [];
+      const _matches: typeof champions = [];
 
       const regex = new RegExp(`^\\D*?(${input.value.toLowerCase()})\\D*?$`);
-      for (let n of names) {
-        if (input.value != "" && n.toLowerCase().match(regex)) {
-          _matches.push(n);
+      for (let c of champions) {
+        if (input.value != "" && c.name.toLowerCase().match(regex)) {
+          _matches.push(c);
         }
       }
 
       setMatches([..._matches]);
     });
-
-    //input.addEventListener("focusin", () => setFocus(true));
   }, []);
 
   // useEffect(() => {
@@ -45,17 +48,11 @@ const Searchbar = () => {
   // }, [matches]);
 
   return (
-    <form
-      tabIndex={0}
+    <div
       className="flex flex-col bg-league-dark w-full"
       onFocus={() => setFocus(true)}
-      onBlur={() => {
-        //console.log("focus lost");
-        //setFocus(false);
-      }}
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      onMouseLeave={() => {
+        if (focus && matches.length > 0) setFocus(false);
       }}>
       <Input
         label="Champion Name..."
@@ -73,28 +70,60 @@ const Searchbar = () => {
       />
       <div className="relative">
         {matches.length > 0 && focus ? (
-          <div className="absolute w-full border border-league-primary rounded-b-lg bg-league-dark">
-            <List>
-              {matches.map((champ, i) => (
-                <ListItem
-                  className="rounded-none"
-                  key={i}
-                  onClick={(e) => {
-                    console.log(champ);
-                    inputRef.current!.value = champ;
-                    setFocus(false);
-                  }}>
-                  {champ}
-                </ListItem>
-              ))}
-            </List>
-          </div>
+          <SearchbarList
+            matches={matches}
+            inputRef={inputRef}
+            setFocus={setFocus}
+          />
         ) : (
           <></>
         )}
       </div>
-    </form>
+    </div>
   );
 };
 
 export default Searchbar;
+
+interface SearchbarListProps {
+  matches: ChampionPreview[];
+  inputRef: RefObject<HTMLInputElement>;
+  setFocus: (b: boolean) => void;
+}
+
+const SearchbarList = ({ matches, inputRef, setFocus }: SearchbarListProps) => {
+  const dispatch = useDispatch();
+
+  const selectChampion = async ({ name, id }: ChampionPreview) => {
+    inputRef.current!.value = name;
+    setFocus(false);
+
+    const res = await fetch("/.netlify/functions/getChampion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    const data = (await res.json()) as ChampionData;
+    dispatch(setChampionData(data));
+  };
+
+  return (
+    <div className="absolute w-full border border-league-primary rounded-b-lg bg-league-dark">
+      <List>
+        {matches.map((champ, i) => (
+          <ListItem
+            className="rounded-none flex flex-row gap-3"
+            key={i}
+            onClick={async () => selectChampion(champ)}>
+            <Avatar src={champ.avatar} alt={`${champ.name} icon`} size="sm" />
+            <Typography
+              className="text-league-primary font-beaufort"
+              variant="lead">
+              {champ.name}
+            </Typography>
+          </ListItem>
+        ))}
+      </List>
+    </div>
+  );
+};

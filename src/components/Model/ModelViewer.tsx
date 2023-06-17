@@ -5,16 +5,15 @@ import Controls from "./Controls";
 
 interface Props {
   input: string;
-  rotation: number;
 }
 
-const ModelViewer = ({ input, rotation }: Props) => {
+const ModelViewer = ({ input }: Props) => {
   return (
     <Canvas>
       <ambientLight intensity={1} />
       <Controls />
 
-      <Model input={input} rotation={rotation} />
+      <Model input={input} />
     </Canvas>
   );
 };

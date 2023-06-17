@@ -2,15 +2,20 @@ import { useEffect, useRef } from "react";
 import { AnimationMixer } from "three";
 import { useLoader, useFrame } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { useSelector } from "react-redux";
+import { RootState } from "./../../store";
 
 interface Props {
   input: string;
-  rotation: number;
 }
 
-const Model = ({ input, rotation }: Props) => {
+const Model = ({ input }: Props) => {
   const mixer = useRef<AnimationMixer>();
   const gltf = useLoader(GLTFLoader, input);
+
+  const addedRotation = useSelector(
+    (state: RootState) => state.champion.rotation
+  );
 
   useEffect(() => {
     if (!gltf) {
@@ -18,7 +23,7 @@ const Model = ({ input, rotation }: Props) => {
     }
 
     mixer.current = new AnimationMixer(gltf.scene);
-    const action = mixer.current.clipAction(gltf.animations[1]);
+    const action = mixer.current.clipAction(gltf.animations[0]);
     action.play();
   }, [gltf]);
 
@@ -28,7 +33,7 @@ const Model = ({ input, rotation }: Props) => {
     <primitive
       object={gltf.scene}
       position={[0.75, -0.75, -1.5]}
-      rotation={[0, -Math.PI / 3 + rotation, 0]}
+      rotation={[0, -Math.PI / 3 + addedRotation, 0]}
       scale={[0.01, 0.01, 0.01]}
     />
   ) : (

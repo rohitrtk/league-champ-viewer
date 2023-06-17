@@ -1,13 +1,15 @@
 export type ChampionAbility = {
   name: string;
-  imageUrl: string;
-  desc: string;
+  icon: string;
+  description: string;
 };
 
 export type ChampionData = {
+  id: number;
   name: string;
+  avatar: string;
   title: string;
-  desc: string;
+  description: string;
   abilities: {
     passive: ChampionAbility;
     q: ChampionAbility;
@@ -15,5 +17,7 @@ export type ChampionData = {
     e: ChampionAbility;
     r: ChampionAbility;
   };
-  gltf: File | string;
+  model: string;
 };
+
+export type ChampionPreview = Pick<ChampionData, "id" | "name" | "avatar">;

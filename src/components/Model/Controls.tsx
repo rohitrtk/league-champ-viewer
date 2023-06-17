@@ -9,6 +9,7 @@ const Controls = () => {
 
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
+
     return () => controls.dispose();
   }, [camera, gl]);
 
